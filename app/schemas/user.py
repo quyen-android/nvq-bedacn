@@ -5,4 +5,6 @@ class UserCreate(BaseModel):
     email: EmailStr
     mat_khau: str
     
-
+class UserLogin(BaseModel):
+    email: EmailStr
+    mat_khau: str
