@@ -15,6 +15,6 @@ class User(Base):
     anh_url = Column(String, nullable=True)
     quyen = Column(String, default="user")
     trang_thai = Column(Boolean, default=True)
-    dn_lan_cuoi = Column(DateTime, nullable=True)
+    dn_lan_cuoi = Column(DateTime(timezone=True), nullable=True)
     da_xac_thuc = Column(Boolean, default=False)
     ngay_tao = Column(DateTime, default=datetime.now(timezone.utc))

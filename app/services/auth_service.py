@@ -1,11 +1,14 @@
 from sqlalchemy.orm import Session
 from datetime import datetime,timezone
+from jose import jwt
 
 from app.repositories.user_repo import UserRepository
 from app.repositories.token_repo import TokenRepository
 from app.core.security import hash_password, verify_password
 from app.utils.token import create_access_token, create_refresh_token
-
+from app.utils.email import send_reset_email
+from app.utils.token import create_reset_token
+from app.core.security import settings
 
 class AuthService:
 
@@ -42,6 +45,9 @@ class AuthService:
 
         if not verify_password(mat_khau, user.mat_khau):
             raise ValueError("Email hoặc mật khẩu không đúng")
+
+        user.dn_lan_cuoi = datetime.now(timezone.utc)
+        db.commit()
 
         access = create_access_token({"sub": str(user.ma_nguoi_dung)})
         refresh,expire = create_refresh_token({"sub": str(user.ma_nguoi_dung)})
@@ -86,3 +92,45 @@ class AuthService:
         )
 
         return new_access, new_refresh
+    
+    def forgot_password(self, db: Session, email: str):
+
+        user = self.user_repo.get_user_by_email(db, email)
+
+        if not user:
+            return
+
+        token = create_reset_token(email)
+
+        reset_link = f"http://localhost:3000/reset-password?token={token}"
+
+        send_reset_email(email, reset_link)
+
+    # 🔹 RESET MẬT KHẨU
+    def reset_password(self, db: Session, token: str, new_password: str, confirm_password: str):
+
+        if new_password != confirm_password:
+            raise ValueError("Mật khẩu không trùng nhau")
+        try:
+            payload = jwt.decode(
+                token,
+                settings.SECRET_KEY,
+                algorithms=[settings.ALGORITHM]
+            )
+
+            if payload.get("type") != "reset":
+                raise ValueError("Token không hợp lệ")
+
+            email = payload.get("sub")
+
+            user = self.user_repo.get_user_by_email(db, email)
+            
+            if not user:
+                raise ValueError("User không tồn tại")
+
+            user.mat_khau = hash_password(new_password)
+
+            db.commit()
+
+        except Exception:
+            raise ValueError("Token không hợp lệ hoặc hết hạn")

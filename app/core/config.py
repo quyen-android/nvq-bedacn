@@ -9,8 +9,14 @@ class Settings(BaseSettings):
 
     ACCESS_TOKEN_EXPIRE_MINUTES:int
     REFRESH_TOKEN_EXPIRE_DAYS:int
+    RESET_TOKEN_EXPIRE_MINUTES:int
+
+    EMAIL_HOST: str
+    EMAIL_PORT: int
+    EMAIL_USER: str
+    EMAIL_PASS: str
 
     class Config:
         env_file = ".env"
-        
+
 settings = Settings()

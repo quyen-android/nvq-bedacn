@@ -8,3 +8,11 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     mat_khau: str
+
+class ResetPasswordSchema(BaseModel):
+    token: str
+    new_password: str
+    confirm_password: str
+
+class ForgotPasswordSchema(BaseModel):
+    email: EmailStr

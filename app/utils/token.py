@@ -38,3 +38,20 @@ def create_refresh_token(data: dict):
     )
 
     return token, expire
+
+def create_reset_token(email: str):
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=settings.RESET_TOKEN_EXPIRE_MINUTES
+    )
+
+    payload = {
+        "sub": email,
+        "exp": expire,
+        "type": "reset"
+    }
+
+    return jwt.encode(
+        payload,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM
+    )
