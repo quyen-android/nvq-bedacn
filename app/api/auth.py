@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.services.auth_service import AuthService
-from app.schemas.user import UserCreate, UserLogin
+from app.schemas.user import UserCreate, UserLogin, ForgotPasswordSchema, ResetPasswordSchema
 from app.db.session import get_db
+from app.utils.email import send_reset_email
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -53,3 +54,36 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
 
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
+    
+# FORGOT PASSWORD
+@router.post("/forgot-password")
+def forgot_password(data: ForgotPasswordSchema, db: Session = Depends(get_db)):
+    try:
+        service = AuthService()
+        service.forgot_password(db, data.email)
+
+        return {"msg": "Nếu email tồn tại, chúng tôi đã gửi link"}
+
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+#  RESET PASSWORD
+@router.post("/reset-password")
+def reset_password(data: ResetPasswordSchema, db: Session = Depends(get_db)):
+    try:
+        service = AuthService()
+        service.reset_password(db, data.token, data.new_password, data.confirm_password)
+        
+        return {"msg": "Đổi mật khẩu thành công"}
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+@router.get("/test-email")
+def test_email():
+    send_reset_email(
+        "quyen24a3k49@gmail.com",
+        "http://localhost:3000/reset-password?token=abc"
+    )
+    return {"msg": "Check mail đi "}
