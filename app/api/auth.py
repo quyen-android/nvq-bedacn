@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
 
 from app.services.auth_service import AuthService
@@ -7,6 +7,7 @@ from app.db.session import get_db
 from app.utils.email import send_reset_email
 from app.core.deps import get_current_user, require_role
 from fastapi.security import OAuth2PasswordRequestForm
+
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
@@ -144,3 +145,24 @@ def admin_api(
     user = Depends(require_role("admin"))
 ):
     return {"message": "Hello admin"}
+
+@router.put("/me")
+async def update_me(
+    ten_nguoi_dung: str = Form(None),
+    sdt: str = Form(None),
+    dia_chi: str = Form(None),
+    anh_url: UploadFile = File(None),
+
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    auth_service = AuthService()
+
+    return await auth_service.update_profile(
+        db=db,
+        user_id=current_user.ma_nguoi_dung,
+        ten_nguoi_dung=ten_nguoi_dung,
+        sdt=sdt,
+        dia_chi=dia_chi,
+        anh=anh_url
+    )

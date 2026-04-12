@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     EMAIL_USER: str
     EMAIL_PASS: str
 
+    UPLOAD_FOLDER: str = "uploads"
+    MAX_FILE_SIZE: int
+
     class Config:
         env_file = ".env"
 
