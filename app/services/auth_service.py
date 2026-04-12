@@ -178,9 +178,11 @@ class AuthService:
                 raise HTTPException(400, "SĐT đã tồn tại")
 
             user.sdt = sdt
+            updated = True
 
-            if dia_chi is not None:
-                user.dia_chi = dia_chi
+        if dia_chi is not None:
+            user.dia_chi = dia_chi
+            updated = True
 
         if anh:
             contents = await anh.read()
@@ -212,7 +214,11 @@ class AuthService:
             image.save(filepath, format="JPEG", quality=85)
 
             user.anh_url = filepath
+            updated = True
 
+        if not any([ten_nguoi_dung, sdt, dia_chi, anh]):
+            return {"message": "Không có dữ liệu thay đổi"}
+        
         db.commit()
         db.refresh(user)
 
@@ -227,3 +233,35 @@ class AuthService:
             }
         }
     # CHANGE PASSWORD
+    def change_password(
+        self,
+        db,
+        user_id: int,
+        current_password: str,
+        new_password: str,
+        confirm_password: str
+    ):
+        user = self.user_repo.get_user_by_id(db, user_id)
+
+        if not user:
+            raise HTTPException(404, "User không tồn tại")
+
+        if not verify_password(current_password, user.mat_khau):
+            raise HTTPException(400, "Mật khẩu hiện tại không đúng")
+
+        if new_password != confirm_password:
+            raise HTTPException(400, "Mật khẩu không trùng nhau")
+
+        if verify_password(new_password, user.mat_khau):
+            raise HTTPException(400, "Không được trùng mật khẩu cũ")
+
+        if len(new_password) < 6:
+            raise HTTPException(400, "Mật khẩu phải >= 6 ký tự")
+
+        user.mat_khau = hash_password(new_password)
+
+        self.token_repo.revoke_all_by_user(db, user_id)
+
+        db.commit()
+
+        return {"message": "Đổi mật khẩu thành công"}

@@ -136,8 +136,11 @@ def refresh_token(
 def get_me(current_user = Depends(get_current_user)):
     return {
         "id": current_user.ma_nguoi_dung,
+        "ten_nguoi_dung": current_user.ten_nguoi_dung,
         "email": current_user.email,
-        "role": current_user.quyen
+        "sdt": current_user.sdt,
+        "dia_chi": current_user.dia_chi,
+        "anh_url": current_user.anh_url
     }
 
 @router.get("/admin")
@@ -166,3 +169,23 @@ async def update_me(
         dia_chi=dia_chi,
         anh=anh_url
     )
+
+@router.put("/me/changepassword")
+def change_password(
+    current_password: str = Form(...), 
+    new_password: str = Form(...), 
+    confirm_password: str = Form(...), 
+
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    auth_service = AuthService()
+
+    return auth_service.change_password(
+        db=db,
+        user_id=current_user.ma_nguoi_dung,
+        current_password=current_password.strip(),
+        new_password=new_password.strip(),
+        confirm_password=confirm_password.strip()
+    )
+
