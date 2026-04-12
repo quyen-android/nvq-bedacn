@@ -1,3 +1,4 @@
+from fastapi import UploadFile, File, Form
 from pydantic import BaseModel,EmailStr
 
 class UserCreate(BaseModel):
@@ -19,3 +20,9 @@ class ForgotPasswordSchema(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+class UserUpdate(BaseModel):
+    ten_nguoi_dung: str = Form(None),
+    sdt: str = Form(None),
+    dia_chi: str = Form(None),
+    anh: UploadFile = File(None),

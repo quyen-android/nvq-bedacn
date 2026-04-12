@@ -1,6 +1,11 @@
 from sqlalchemy.orm import Session
 from datetime import datetime,timezone
 from jose import jwt
+from fastapi import HTTPException
+import os
+from PIL import Image
+from io import BytesIO
+import uuid 
 
 from app.repositories.user_repo import UserRepository
 from app.repositories.token_repo import TokenRepository
@@ -8,6 +13,7 @@ from app.core.security import hash_password, verify_password
 from app.utils.token import create_access_token, create_refresh_token, create_reset_token
 from app.utils.email import send_reset_email
 from app.core.security import settings
+from app.core.validator import validate_email, validate_phone
 
 class AuthService:
 
@@ -15,7 +21,7 @@ class AuthService:
         self.user_repo = UserRepository()
         self.token_repo = TokenRepository()
 
-    # 🔹 REGISTER
+    # REGISTER
     def register_user(self, db: Session, ten_nguoi_dung: str, email: str, mat_khau: str):
 
         existing_user = self.user_repo.get_user_by_email(db, email)
@@ -145,3 +151,79 @@ class AuthService:
 
         except Exception:
             raise ValueError("Token không hợp lệ hoặc hết hạn")
+        
+    # UPDATE PROFILE
+    async def update_profile(
+        self,
+        db,
+        user_id: int,
+        ten_nguoi_dung: str,
+        sdt: str,
+        dia_chi: str,
+        anh
+    ):
+        user = self.user_repo.get_user_by_id(db, user_id)
+
+        if not user:
+            raise HTTPException(404, "User không tồn tại")
+
+        if ten_nguoi_dung is not None:
+            user.ten_nguoi_dung = ten_nguoi_dung
+
+        if sdt is not None:
+            validate_phone(sdt)
+
+            existing = self.user_repo.get_user_by_sdt(db, sdt)
+            if existing and existing.ma_nguoi_dung != user_id:
+                raise HTTPException(400, "SĐT đã tồn tại")
+
+            user.sdt = sdt
+
+            if dia_chi is not None:
+                user.dia_chi = dia_chi
+
+        if anh:
+            contents = await anh.read()
+
+            if len(contents) > settings.MAX_FILE_SIZE:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Ảnh vượt quá {settings.MAX_FILE_SIZE }MB"
+                )
+
+            try:
+                image = Image.open(BytesIO(contents))
+                image.verify()
+            except:
+                raise HTTPException(status_code=400, detail="File không phải ảnh hợp lệ")
+
+            image = Image.open(BytesIO(contents)).convert("RGB")
+
+            os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
+
+            if user.anh_url:
+                old_path = os.path.join(settings.UPLOAD_FOLDER, os.path.basename(user.anh_url))
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+
+            filename = f"user_{user_id}_{uuid.uuid4().hex}.jpg"
+            filepath = os.path.join(settings.UPLOAD_FOLDER, filename)
+
+            image.save(filepath, format="JPEG", quality=85)
+
+            user.anh_url = filepath
+
+        db.commit()
+        db.refresh(user)
+
+        return {
+            "message": "Cập nhật thành công",
+            "data": {
+                "id": user.ma_nguoi_dung,
+                "ten": user.ten_nguoi_dung,
+                "sdt": user.sdt,
+                "dia_chi": user.dia_chi,
+                "anh": user.anh_url
+            }
+        }
+    # CHANGE PASSWORD
