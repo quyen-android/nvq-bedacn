@@ -5,9 +5,8 @@ from jose import jwt
 from app.repositories.user_repo import UserRepository
 from app.repositories.token_repo import TokenRepository
 from app.core.security import hash_password, verify_password
-from app.utils.token import create_access_token, create_refresh_token
+from app.utils.token import create_access_token, create_refresh_token, create_reset_token
 from app.utils.email import send_reset_email
-from app.utils.token import create_reset_token
 from app.core.security import settings
 
 class AuthService:
@@ -35,7 +34,7 @@ class AuthService:
 
         return user
 
-    # 🔹 LOGIN
+    # LOGIN
     def login(self, db: Session, email: str, mat_khau: str):
 
         user = self.user_repo.get_user_by_email(db, email)
@@ -46,10 +45,13 @@ class AuthService:
         if not verify_password(mat_khau, user.mat_khau):
             raise ValueError("Email hoặc mật khẩu không đúng")
 
+        if user.trang_thai != True:
+            raise ValueError("Tài khoản bị khóa")
+    
         user.dn_lan_cuoi = datetime.now(timezone.utc)
         db.commit()
 
-        access = create_access_token({"sub": str(user.ma_nguoi_dung)})
+        access = create_access_token({"sub": str(user.ma_nguoi_dung),})
         refresh,expire = create_refresh_token({"sub": str(user.ma_nguoi_dung)})
 
         self.token_repo.create(
@@ -91,14 +93,19 @@ class AuthService:
             thoi_gian_het_han=expire
         )
 
-        return new_access, new_refresh
-    
+        return {
+            "access_token": new_access,
+            "refresh_token": new_refresh,
+            "token_type": "bearer"
+        }
+        
+    # FORGOT MẬT KHẨU
     def forgot_password(self, db: Session, email: str):
 
         user = self.user_repo.get_user_by_email(db, email)
 
         if not user:
-            return
+            return {"message": "Nếu email tồn tại, link reset đã được gửi"}
 
         token = create_reset_token(email)
 
@@ -106,7 +113,9 @@ class AuthService:
 
         send_reset_email(email, reset_link)
 
-    # 🔹 RESET MẬT KHẨU
+        return {"message": "Nếu email tồn tại, link reset đã được gửi"}
+
+    # RESET MẬT KHẨU
     def reset_password(self, db: Session, token: str, new_password: str, confirm_password: str):
 
         if new_password != confirm_password:
@@ -115,7 +124,7 @@ class AuthService:
             payload = jwt.decode(
                 token,
                 settings.SECRET_KEY,
-                algorithms=[settings.ALGORITHM]
+                algorithms=settings.ALGORITHM
             )
 
             if payload.get("type") != "reset":
@@ -129,6 +138,8 @@ class AuthService:
                 raise ValueError("User không tồn tại")
 
             user.mat_khau = hash_password(new_password)
+
+            self.token_repo.revoke_all_by_user(db, user.ma_nguoi_dung)
 
             db.commit()
 
