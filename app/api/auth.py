@@ -189,3 +189,14 @@ def change_password(
         confirm_password=confirm_password.strip()
     )
 
+@router.post("/logout-all")
+def logout_all(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    auth_service = AuthService()
+
+    return auth_service.logout_all(
+        db=db,
+        user_id=current_user.ma_nguoi_dung
+    )
