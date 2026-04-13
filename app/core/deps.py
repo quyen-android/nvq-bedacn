@@ -37,7 +37,7 @@ def get_current_user(self,
 
     user_repo = UserRepository()
 
-    user = user_repo.get_user_by_id(db, int(user_id))
+    user = user_repo.get_user_by_id(db, str(user_id))
 
     if not user:
         raise HTTPException(
