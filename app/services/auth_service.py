@@ -232,6 +232,7 @@ class AuthService:
                 "anh": user.anh_url
             }
         }
+    
     # CHANGE PASSWORD
     def change_password(
         self,
@@ -265,3 +266,8 @@ class AuthService:
         db.commit()
 
         return {"message": "Đổi mật khẩu thành công"}
+    
+    def logout_all(self, db, user_id: int):
+        self.token_repo.revoke_all_by_user(db, user_id)
+
+        return {"message": "Đã logout tất cả thiết bị"}
