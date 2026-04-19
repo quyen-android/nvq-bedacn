@@ -20,7 +20,7 @@ def get_me(current_user = Depends(get_current_user)):
         "anh_url": current_user.anh_url
     }
 
-@router.put("/me")
+@router.put("/update")
 async def update_me(
     ten_nguoi_dung: str = Form(None),
     sdt: str = Form(None),
@@ -41,7 +41,7 @@ async def update_me(
         anh=anh
     )
 
-@router.put("/me/change-password")
+@router.put("/change-password")
 def change_password(
     current_password: str = Form(...),
     new_password: str = Form(...),
