@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.services import dia_diem_service
+from app.services.dia_diem_service import DiaDiemService
 from app.core.deps import get_current_user_optional
 from app.models.user import User
 
@@ -22,7 +22,7 @@ def get_dia_diem(
 ):
     tags = the.split(",") if the else None
 
-    return dia_diem_service.get_dia_diem_list(
+    return DiaDiemService.get_dia_diem_list(
         db,
         loai=loai,
         search=search,

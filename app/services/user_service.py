@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from PIL import Image
 
 from app.repositories.user_repo import UserRepository
-from app.core.security import settings
+from app.core.config import settings
 from app.core.validator import validate_phone
 
 
@@ -57,7 +57,7 @@ class UserService:
             os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
 
             filename = f"user_{user_id}_{uuid.uuid4().hex}.jpg"
-            filepath = os.path.join(settings.UPLOAD_FOLDER, filename)
+            filepath = os.path.join(settings.UPLOAD_FOLDER, "users", filename)
 
             image.save(filepath, "JPEG")
 
