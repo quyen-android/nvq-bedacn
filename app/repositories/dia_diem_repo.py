@@ -1,8 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
-from app.models import DiaDiem, LoaiDiaDiem, The, TheDiaDiem
-
+from app.models import DiaDiem, LoaiDiaDiem, The, TheDiaDiem, AnhDiaDiem
 
 def filter_dia_diem(
     db: Session,
@@ -48,3 +47,28 @@ def filter_dia_diem(
         query = query.filter(DiaDiem.danh_gia >= danh_gia)
 
     return query.distinct().all()
+
+def create(db, dia_diem):
+    db.add(dia_diem)
+    db.commit()
+    db.refresh(dia_diem)
+    return dia_diem
+
+
+def get_by_id(db, id):
+    return db.query(DiaDiem).filter(
+        DiaDiem.ma_dia_diem == id
+    ).first()
+
+
+def update(db):
+    db.commit()
+
+
+def delete(db, dia_diem):
+    db.delete(dia_diem)
+    db.commit()
+
+
+def get_all(db):
+    return db.query(DiaDiem).all()

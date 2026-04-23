@@ -5,7 +5,8 @@ from jose import jwt
 
 from app.repositories.user_repo import UserRepository
 from app.repositories.token_repo import TokenRepository
-from app.core.security import hash_password, verify_password, settings
+from app.core.security import hash_password, verify_password
+from app.core.config import settings
 from app.utils.token import create_access_token, create_refresh_token, create_reset_token
 from app.utils.email import send_reset_email
 

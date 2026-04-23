@@ -1,3 +1,5 @@
 pip install fastapi uvicorn sqlalchemy psycopg2-binary passlib[bcrypt] python-jose
 pip install pillow
 pip install unidecode
+pip install python-slugify
+pip install httpx python-dotenv
