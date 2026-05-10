@@ -3,6 +3,7 @@ from io import BytesIO
 from datetime import time
 from fastapi import HTTPException, UploadFile
 from PIL import Image
+from app.services.rag_service import RagService
 import re
 
 from app.models.dia_diem import DiaDiem
@@ -157,6 +158,9 @@ class DiaDiemService:
                 ))
 
         db.commit()    
+        db.refresh(dia_diem)
+
+        RagService.add_place(dia_diem)
 
         return {"id": str(dia_diem.ma_dia_diem)}
 
@@ -299,6 +303,8 @@ class DiaDiemService:
         db.commit()
         db.refresh(dia_diem)
 
+        RagService.update_place(dia_diem)
+
         return {
             "message": "Cập nhật thành công",
             "id": str(dia_diem.ma_dia_diem)
@@ -312,6 +318,8 @@ class DiaDiemService:
             raise HTTPException(404, "Không tìm thấy")
 
         dia_diem_repo.delete(db, dia_diem)
+
+        RagService.delete_place(dia_diem_id)
 
         return {"message": "deleted"}
 
