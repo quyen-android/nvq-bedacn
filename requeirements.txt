@@ -3,3 +3,14 @@ pip install pillow
 pip install unidecode
 pip install python-slugify
 pip install httpx python-dotenv
+pip install pydantic
+pip install pydantic-settings
+
+pip install chromadb
+pip install sentence-transformers
+
+pip install requests
+pip install ollama
+ollama pull nomic-embed-text
+
+pip install passlib[argon2]
