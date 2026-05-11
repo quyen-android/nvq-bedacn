@@ -14,9 +14,6 @@ class LichTrinh(Base):
 
     tieu_de = Column(String(255))
     ngay = Column(Date)
-    chi_phi_ngay = Column(DECIMAL(10, 2))
-
-    trang_thai = Column(String(50))
 
     # relationship
     chuyen_di = relationship("ChuyenDi", back_populates="lich_trinhs")

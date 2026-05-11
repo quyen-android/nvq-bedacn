@@ -5,3 +5,9 @@ from .the_dia_diem import TheDiaDiem
 from .tinh import Tinh
 from .anh_dia_diem import AnhDiaDiem
 from .yeu_thich import YeuThich
+from .user import User
+from .chuyen_di import ChuyenDi
+from .lich_trinh import LichTrinh
+from .chi_phi import ChiPhi
+from .chi_tiet_lich_trinh import ChiTietLichTrinh
+from .chi_phi_chuyen_di import ChiPhiChuyenDi

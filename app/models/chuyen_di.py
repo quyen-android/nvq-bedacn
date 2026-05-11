@@ -39,9 +39,9 @@ class ChuyenDi(Base):
 
     so_nguoi = Column(Integer, default=1)
     ngan_sach = Column(DECIMAL(10, 2))
-
+    trang_thai = Column(String(50))
     # user
-    nguoi_dung = relationship("NguoiDung", back_populates="chuyen_dis")
+    nguoi_dung = relationship("User", back_populates="chuyen_dis")
 
     # phương tiện global
     phuong_tien = relationship("PhuongTien")
@@ -53,6 +53,12 @@ class ChuyenDi(Base):
     # lịch trình
     lich_trinhs = relationship(
         "LichTrinh",
+        back_populates="chuyen_di",
+        cascade="all, delete"
+    )
+
+    chi_phi_chuyen_dis = relationship(
+        "ChiPhiChuyenDi",
         back_populates="chuyen_di",
         cascade="all, delete"
     )

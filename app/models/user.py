@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from app.db.base import Base
 import uuid
@@ -18,3 +19,9 @@ class User(Base):
     trang_thai = Column(Boolean, default=True)
     dn_lan_cuoi = Column(DateTime(timezone=True), nullable=True)
     ngay_tao = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    chuyen_dis = relationship(
+        "ChuyenDi",
+        back_populates="nguoi_dung",
+        cascade="all, delete"
+    )
