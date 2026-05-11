@@ -12,4 +12,8 @@ class ChiPhi(Base):
 
     loai_chi_phi = Column(String(100))
 
-    chuyen_dis = relationship("ChiPhiChuyenDi", back_populates="chi_phi")
+    chi_phi_chuyen_dis = relationship(
+        "ChiPhiChuyenDi",
+        back_populates="chi_phi",
+        cascade="all, delete"
+    )

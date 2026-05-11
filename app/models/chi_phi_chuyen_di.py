@@ -14,5 +14,12 @@ class ChiPhiChuyenDi(Base):
     so_tien = Column(DECIMAL(10, 2))
 
     # relationship
-    chuyen_di = relationship("ChuyenDi", back_populates="chi_phis")
-    chi_phi = relationship("ChiPhi", back_populates="chuyen_dis")
+    chuyen_di = relationship(
+        "ChuyenDi",
+        back_populates="chi_phi_chuyen_dis"
+    )
+
+    chi_phi = relationship(
+        "ChiPhi",
+        back_populates="chi_phi_chuyen_dis"
+    )
