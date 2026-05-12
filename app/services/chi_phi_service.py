@@ -1,4 +1,4 @@
-from app.repositories import tinh_repo, phuong_tien_repo, chuyen_di_repo,lich_trinh_repo,chi_tiet_lich_trinh_repo
+from app.repositories import tinh_repo, phuong_tien_repo, chuyen_di_repo,lich_trinh_repo,chi_tiet_lich_trinh_repo, dia_diem_repo, loai_dia_diem_repo
 from app.utils.distance import haversine
 from math import ceil
 
@@ -280,6 +280,406 @@ def tinh_tong_chi_phi_di_chuyen(
 
         "tong_chi_phi_di_chuyen": round(
             tong_chi_phi,
+            0
+        )
+    }
+
+def tinh_chi_phi_an_uong(
+    db,
+    ma_chuyen_di
+):
+    chuyen_di = (
+        chuyen_di_repo.get_by_id(
+            db,
+            ma_chuyen_di
+        )
+    )
+
+    if not chuyen_di:
+        raise ValueError(
+            "Không tìm thấy chuyến đi"
+        )
+
+    so_nguoi = chuyen_di.so_nguoi
+
+    tong_chi_phi = 0
+
+    lich_trinhs = (
+        lich_trinh_repo.get_by_chuyen_di(
+            db,
+            ma_chuyen_di
+        )
+    )
+
+    for lich_trinh in lich_trinhs:
+
+        chi_tiets = (
+            chi_tiet_lich_trinh_repo
+            .get_by_lich_trinh(
+                db,
+                lich_trinh.ma_lich_trinh
+            )
+        )
+
+        for ct in chi_tiets:
+
+            dia_diem = (
+                dia_diem_repo.get_by_id(
+                    db,
+                    ct.ma_dia_diem
+                )
+            )
+
+            if not dia_diem:
+                continue
+
+            loai_dia_diem = (
+                loai_dia_diem_repo.get_by_id(
+                    db,
+                    dia_diem.ma_loai
+                )
+            )
+
+            if not loai_dia_diem:
+                continue
+
+            # quán ăn
+            if (
+                loai_dia_diem.ten_loai
+                == "Quán ăn"
+            ):
+
+                gia_tb = (
+                    dia_diem.gia_trung_binh or 0
+                )
+
+                tong_chi_phi += (
+                    gia_tb * so_nguoi
+                )
+
+    return {
+        "tong_chi_phi_an_uong": round(
+            tong_chi_phi,
+            0
+        )
+    }
+
+def tinh_chi_phi_tham_quan(
+    db,
+    ma_chuyen_di
+):
+    chuyen_di = (
+        chuyen_di_repo.get_by_id(
+            db,
+            ma_chuyen_di
+        )
+    )
+
+    if not chuyen_di:
+        raise ValueError(
+            "Không tìm thấy chuyến đi"
+        )
+
+    so_nguoi = chuyen_di.so_nguoi
+
+    tong_chi_phi = 0
+
+    lich_trinhs = (
+        lich_trinh_repo.get_by_chuyen_di(
+            db,
+            ma_chuyen_di
+        )
+    )
+
+    for lich_trinh in lich_trinhs:
+
+        chi_tiets = (
+            chi_tiet_lich_trinh_repo
+            .get_by_lich_trinh(
+                db,
+                lich_trinh.ma_lich_trinh
+            )
+        )
+
+        for ct in chi_tiets:
+
+            dia_diem = (
+                dia_diem_repo.get_by_id(
+                    db,
+                    ct.ma_dia_diem
+                )
+            )
+
+            if not dia_diem:
+                continue
+
+            loai_dia_diem = (
+                loai_dia_diem_repo.get_by_id(
+                    db,
+                    dia_diem.ma_loai
+                )
+            )
+
+            if not loai_dia_diem:
+                continue
+
+            # tham quan
+            if (
+                loai_dia_diem.ten_loai
+                == "Điểm tham quan"
+            ):
+
+                gia_ve = (
+                    dia_diem.gia_trung_binh or 0
+                )
+
+                chi_phi = (
+                    gia_ve * so_nguoi
+                )
+
+                # update DB
+                ct.chi_phi_tham_quan = (
+                    round(chi_phi, 2)
+                )
+
+                tong_chi_phi += chi_phi
+
+    db.commit()
+
+    return {
+        "tong_chi_phi_tham_quan": round(
+            tong_chi_phi,
+            0
+        )
+    }
+
+from math import ceil
+
+
+def tinh_chi_phi_luu_tru(
+    db,
+    ma_chuyen_di
+):
+    chuyen_di = (
+        chuyen_di_repo.get_by_id(
+            db,
+            ma_chuyen_di
+        )
+    )
+
+    if not chuyen_di:
+        raise ValueError(
+            "Không tìm thấy chuyến đi"
+        )
+
+    so_nguoi = chuyen_di.so_nguoi
+
+    tong_chi_phi = 0
+
+    lich_trinhs = (
+        lich_trinh_repo.get_by_chuyen_di(
+            db,
+            ma_chuyen_di
+        )
+    )
+
+    for lich_trinh in lich_trinhs:
+
+        chi_tiets = (
+            chi_tiet_lich_trinh_repo
+            .get_by_lich_trinh(
+                db,
+                lich_trinh.ma_lich_trinh
+            )
+        )
+
+        for ct in chi_tiets:
+
+            dia_diem = (
+                dia_diem_repo.get_by_id(
+                    db,
+                    ct.ma_dia_diem
+                )
+            )
+
+            if not dia_diem:
+                continue
+
+            loai_dia_diem = (
+                loai_dia_diem_repo.get_by_id(
+                    db,
+                    dia_diem.ma_loai
+                )
+            )
+
+            if not loai_dia_diem:
+                continue
+
+            # lưu trú
+            if (
+                loai_dia_diem.ten_loai == "Chỗ ở"
+            ):
+
+                gia_phong = (
+                    dia_diem.gia_trung_binh or 0
+                )
+
+                suc_chua = 3
+
+                so_phong = ceil(
+                    so_nguoi / suc_chua
+                )
+
+                chi_phi = (
+                    gia_phong * so_phong
+                )
+
+                # update DB
+                ct.chi_phi_luu_tru = (
+                    round(chi_phi, 2)
+                )
+
+                tong_chi_phi += chi_phi
+
+    db.commit()
+
+    return {
+        "tong_chi_phi_luu_tru": round(
+            tong_chi_phi,
+            0
+        )
+    }
+
+def tinh_tong_chi_phi_chuyen_di(
+    db,
+    ma_chuyen_di,
+    so_phong=1
+):
+    # =========================
+    # DI CHUYỂN
+    # =========================
+    chi_phi_di_chuyen = (
+        tinh_tong_chi_phi_di_chuyen(
+            db,
+            ma_chuyen_di
+        )
+    )
+
+    # =========================
+    # ĂN UỐNG
+    # =========================
+    chi_phi_an_uong = (
+        tinh_chi_phi_an_uong(
+            db,
+            ma_chuyen_di
+        )
+    )
+
+    # =========================
+    # LƯU TRÚ
+    # =========================
+    chi_phi_luu_tru = (
+        tinh_chi_phi_luu_tru(
+            db,
+            ma_chuyen_di,
+            so_phong
+        )
+    )
+
+    # =========================
+    # THAM QUAN
+    # =========================
+    chi_phi_tham_quan = (
+        tinh_chi_phi_tham_quan(
+            db,
+            ma_chuyen_di
+        )
+    )
+
+    # =========================
+    # TỔNG CHI PHÍ
+    # =========================
+    tong_chi_phi = (
+        chi_phi_di_chuyen["tong_chi_phi_di_chuyen"]
+        +
+        chi_phi_an_uong["tong_chi_phi_an_uong"]
+        +
+        chi_phi_luu_tru["tong_chi_phi_luu_tru"]
+        +
+        chi_phi_tham_quan["tong_chi_phi_tham_quan"]
+    )
+
+    # =========================
+    # LẤY NGÂN SÁCH
+    # =========================
+    chuyen_di = (
+        chuyen_di_repo.get_by_id(
+            db,
+            ma_chuyen_di
+        )
+    )
+
+    ngan_sach = (
+        chuyen_di.ngan_sach or 0
+    )
+
+    vuot_ngan_sach = (
+        tong_chi_phi > ngan_sach
+    )
+
+    so_tien_vuot = max(
+        tong_chi_phi - ngan_sach,
+        0
+    )
+
+    so_tien_con_lai = max(
+        ngan_sach - tong_chi_phi,
+        0
+    )
+
+    return {
+        "chi_phi_di_chuyen": (
+            chi_phi_di_chuyen[
+                "tong_chi_phi_di_chuyen"
+            ]
+        ),
+
+        "chi_phi_an_uong": (
+            chi_phi_an_uong[
+                "tong_chi_phi_an_uong"
+            ]
+        ),
+
+        "chi_phi_luu_tru": (
+            chi_phi_luu_tru[
+                "tong_chi_phi_luu_tru"
+            ]
+        ),
+
+        "chi_phi_tham_quan": (
+            chi_phi_tham_quan[
+                "tong_chi_phi_tham_quan"
+            ]
+        ),
+
+        "tong_chi_phi": round(
+            tong_chi_phi,
+            0
+        ),
+
+        "ngan_sach": ngan_sach,
+
+        "vuot_ngan_sach": (
+            vuot_ngan_sach
+        ),
+
+        "so_tien_vuot": round(
+            so_tien_vuot,
+            0
+        ),
+
+        "so_tien_con_lai": round(
+            so_tien_con_lai,
             0
         )
     }
