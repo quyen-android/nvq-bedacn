@@ -109,3 +109,57 @@ def tinh_tong_chi_phi_di_chuyen(
             status_code=500,
             detail=str(e)
         )
+    
+@router.get(
+    "/an-uong/{ma_chuyen_di}"
+)
+def tinh_chi_phi_an_uong(
+    ma_chuyen_di: UUID,
+    db: Session = Depends(get_db)
+):
+    try:
+
+        result = (
+            chi_phi_service
+            .tinh_chi_phi_an_uong(
+                db,
+                ma_chuyen_di
+            )
+        )
+
+        return {
+            "success": True,
+            "message": (
+                "Tính chi phí ăn uống thành công"
+            ),
+            "data": result
+        }
+
+    except ValueError as e:
+
+        raise HTTPException(
+            status_code=404,
+            detail=str(e)
+        )
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+    
+@router.put(
+    "/an-uong/{ma_ct}"
+)
+def update_chi_phi_an_uong(
+    ma_ct: UUID,
+    db: Session = Depends(get_db)
+):
+    return (
+        chi_phi_service
+        .update_chi_phi_an_uong(
+            db,
+            ma_ct
+        )
+    )

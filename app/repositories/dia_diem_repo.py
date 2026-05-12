@@ -60,6 +60,10 @@ def get_by_id(db, id):
         DiaDiem.ma_dia_diem == id
     ).first()
 
+def get_by_dia_diem(db, ma_dia_diem):
+    return db.query(DiaDiem).filter(
+        DiaDiem.ma_dia_diem == ma_dia_diem
+    ).all()
 
 def update(db):
     db.commit()
