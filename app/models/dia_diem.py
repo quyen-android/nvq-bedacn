@@ -37,3 +37,7 @@ class DiaDiem(Base):
     tinh = relationship("Tinh", back_populates="dia_diems")
     loai = relationship("LoaiDiaDiem", back_populates="dia_diems")
     anh = relationship("AnhDiaDiem", back_populates="dia_diem")
+    # dia_diems = relationship("DiaDiem",secondary="the_dia_diem")
+    the_dia_diems = relationship("TheDiaDiem",back_populates="dia_diem")
+    khung_gio_vangs = relationship( "KhungGioVang",back_populates="dia_diem",cascade="all, delete")
+   
