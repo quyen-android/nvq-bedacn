@@ -1,5 +1,5 @@
 # app/scripts/ingest_places.py
-
+from app.models import *
 from app.db.session import SessionLocal
 from app.models.dia_diem import DiaDiem
 from app.services.rag_service import RagService

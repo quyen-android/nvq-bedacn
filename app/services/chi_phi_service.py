@@ -4,13 +4,6 @@ from math import ceil
 
 from app.utils.distance import haversine
 
-# giá vé đi lại giá vé liên tỉnh:  (khoảng cách tỉnh đến và tỉnh đi ) * giá / km (lấy mã tỉnh từ db của chuyến đi join với bảng tỉnh để lấy kinh độ và vĩ độ rồi * với mã phương tiện chuyến đi join từ bảng phương tiện)
-# giá xe địa phương: (khoảng cách giữa các điểm) * giá / km * số xe(số người chia ra bao nhiêu xe)  (địa điểm, chuyến đi, phương tiện, lịch trình, chi tiết lịch trình )
-# giá trung bình = 
-        # Quán ăn: giá trung bình * số người (địa điểm, chuyến đi)
-        # Nơi ở: giá trung bình (giá phòng) * số phòng (địa điểm, chuyến đi)
-        # Điểm tham quan: giá trung bình (giá vé)  * số người (địa điểm, chuyến đi)
-
 def tinh_gia_di_chuyen_lien_tinh(
     db,
     ma_chuyen_di
@@ -57,7 +50,7 @@ def tinh_gia_di_chuyen_lien_tinh(
 
     # Giá cho 1 người
     gia_1_nguoi = (
-        float(khoang_cach) *
+        float(khoang_cach) * 2 *
         float(phuong_tien.gia_moi_km)
     )
 
@@ -608,6 +601,15 @@ def tinh_tong_chi_phi_chuyen_di(
         +
         chi_phi_tham_quan["tong_chi_phi_tham_quan"]
     )
+    PHU_PHI = 0.1
+
+    phi_phat_sinh = (
+        tong_chi_phi * PHU_PHI
+    )
+
+    tong_sau_phu_phi = (
+        tong_chi_phi + phi_phat_sinh
+    )
 
     # =========================
     # LẤY NGÂN SÁCH
@@ -662,8 +664,8 @@ def tinh_tong_chi_phi_chuyen_di(
             ]
         ),
 
-        "tong_chi_phi": round(
-            tong_chi_phi,
+        "tong_sau_phu_phi": round(
+            tong_sau_phu_phi,
             0
         ),
 

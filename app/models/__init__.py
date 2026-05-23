@@ -11,3 +11,11 @@ from .lich_trinh import LichTrinh
 from .chi_phi import ChiPhi
 from .chi_tiet_lich_trinh import ChiTietLichTrinh
 from .chi_phi_chuyen_di import ChiPhiChuyenDi
+from .phuong_tien import PhuongTien
+from .loai_du_lich import LoaiDuLich
+from .loai_du_lich_cd import LoaiDuLichCD
+from .so_thich_am_thuc import SoThichAmThuc
+from .so_thich_cd import SoThichCD
+from .yeu_cau_cd import YeuCauCD
+from .yeu_cau_dac_biet import YeuCauDacBiet
+from .khung_gio_vang import KhungGioVang

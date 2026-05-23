@@ -11,3 +11,5 @@ class LoaiDiaDiem(Base):
     ten_loai = Column(String)
 
     dia_diems = relationship("DiaDiem", back_populates="loai")
+
+    thes = relationship("The",back_populates="loai")
