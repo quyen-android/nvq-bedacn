@@ -1,9 +1,9 @@
 import uuid
-from sqlalchemy import Column, String, Date, Integer, DECIMAL, ForeignKey
+from sqlalchemy import Column, String, Date, Integer, DECIMAL, DateTime,ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.base import Base
-
+from datetime import datetime, timezone
 
 class ChuyenDi(Base):
     __tablename__ = "chuyen_di"
@@ -33,6 +33,10 @@ class ChuyenDi(Base):
     nguoi_dung = relationship("User", back_populates="chuyen_dis")
 
     phuong_tien = relationship("PhuongTien")
+
+    ngay_tao = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    ngay_cap_nhat = Column(DateTime(timezone=True), nullable=True)
 
     tinh_di = relationship("Tinh", foreign_keys=[ma_tinh_di])
 

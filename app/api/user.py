@@ -17,7 +17,8 @@ def get_me(current_user = Depends(get_current_user)):
         "email": current_user.email,
         "sdt": current_user.sdt,
         "dia_chi": current_user.dia_chi,
-        "anh_url": current_user.anh_url
+        "anh_url": current_user.anh_url,
+        "quyen": current_user.quyen
     }
 
 @router.put("/update")
