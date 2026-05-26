@@ -7,13 +7,16 @@ from app.api import the
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.ai_planner_api import (router as ai_planner_router)
 from app.api import loai_du_lich
+from app.api import so_thich_am_thuc
 
 app = FastAPI()
 
 app.include_router(auth.router)
 app.include_router(user.router)
+
 app.include_router(dia_diem.router)
 app.include_router(yeu_thich.router)
+
 app.include_router(dia_diem_admin.router)
 app.include_router(tinh.router)
 app.include_router(loai_dia_diem.router)
@@ -24,6 +27,8 @@ app.include_router(ai_planner_router)
 app.include_router(loai_du_lich.router)
 app.include_router(trip_options.router)
 app.include_router(chuyen_di.router)
+app.include_router(so_thich_am_thuc.router)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
