@@ -14,4 +14,5 @@ class The(Base):
 
     loai = relationship("LoaiDiaDiem",back_populates="thes")
 
-    thes = relationship("The",secondary="the_dia_diem")
+    dia_diems = relationship("DiaDiem", secondary="the_dia_diem", back_populates="thes")
+    the_dia_diems = relationship("TheDiaDiem", back_populates="the")

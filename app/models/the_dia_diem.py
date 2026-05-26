@@ -11,5 +11,5 @@ class TheDiaDiem(Base):
     ma_the = Column(UUID(as_uuid=True), ForeignKey("the.ma_the"), primary_key=True)
     dia_diem = relationship("DiaDiem",back_populates="the_dia_diems")
 
-    the = relationship("The")
+    the = relationship("The", back_populates="the_dia_diems")
         
