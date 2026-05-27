@@ -9,7 +9,7 @@ class Tinh(Base):
 
     ma_tinh = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     ten_tinh = Column(String)
-
+    quoc_gia = Column(String)
     kinh_do = Column(Float)
     vi_do = Column(Float)
 

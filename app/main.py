@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.ai_planner_api import (router as ai_planner_router)
 from app.api import loai_du_lich
 from app.api import so_thich_am_thuc
+from app.api import yeu_cau_dac_biet
 
 app = FastAPI()
 
@@ -28,6 +29,7 @@ app.include_router(loai_du_lich.router)
 app.include_router(trip_options.router)
 app.include_router(chuyen_di.router)
 app.include_router(so_thich_am_thuc.router)
+app.include_router(yeu_cau_dac_biet.router)
 
 app.add_middleware(
     CORSMiddleware,
