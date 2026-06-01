@@ -1,14 +1,19 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from app.api import auth, user, dia_diem_admin
 from app.api import dia_diem, yeu_thich, tinh, loai_dia_diem, chi_phi, ai
 from app.api import chuyen_di
-from app.api import trip_options
+from app.api import lua_chon_chuyen_di
 from app.api import the
-from fastapi.middleware.cors import CORSMiddleware
 from app.api.ai_planner_api import (router as ai_planner_router)
 from app.api import loai_du_lich
 from app.api import so_thich_am_thuc
 from app.api import yeu_cau_dac_biet
+from app.api import tinh
+from app.api import geocoding
+from app.api import khung_gio_vang
+from app.api import place_rating
 
 app = FastAPI()
 
@@ -26,11 +31,23 @@ app.include_router(chi_phi.router)
 app.include_router(the.router)
 app.include_router(ai_planner_router)
 app.include_router(loai_du_lich.router)
-app.include_router(trip_options.router)
+app.include_router(lua_chon_chuyen_di.router)
 app.include_router(chuyen_di.router)
 app.include_router(so_thich_am_thuc.router)
 app.include_router(yeu_cau_dac_biet.router)
+app.include_router(tinh.router)
+app.include_router(khung_gio_vang.router)
 
+app.include_router(geocoding.router)
+app.include_router(place_rating.router)
+print("MAIN.PY ĐANG CHẠY")
+print(place_rating.router.routes)
+
+app.mount(
+    "/uploads",
+    StaticFiles(directory="uploads"),
+    name="uploads"
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

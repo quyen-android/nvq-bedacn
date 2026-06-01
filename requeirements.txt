@@ -14,3 +14,5 @@ pip install ollama
 ollama pull nomic-embed-text
 
 pip install passlib[argon2]
+
+pip install httpx

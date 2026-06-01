@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from app.models.chuyen_di import ChuyenDi
 from app.models.loai_du_lich_cd import LoaiDuLichCD
 from app.models.loai_du_lich import LoaiDuLich
@@ -6,6 +8,7 @@ from app.models.so_thich_am_thuc import SoThichAmThuc
 from app.models.yeu_cau_cd import YeuCauCD
 from app.models.yeu_cau_dac_biet import YeuCauDacBiet
 
+
 def create(
     db,
     data,
@@ -13,14 +16,21 @@ def create(
 ):
     chuyen_di = ChuyenDi(
         ma_nguoi_dung=ma_nguoi_dung,
-        ma_pt=data.ma_pt,
+
+        ma_pt_di=data.ma_pt_di,
+        ma_pt_ve=data.ma_pt_ve,
+
         ma_tinh_di=data.ma_tinh_di,
         ma_tinh_den=data.ma_tinh_den,
+
         ten_chuyen_di=data.ten_chuyen_di,
+
         ngay_di=data.ngay_di,
         ngay_ve=data.ngay_ve,
+
         so_nguoi=data.so_nguoi,
         ngan_sach=data.ngan_sach,
+
         trang_thai="ban_nhap"
     )
 
@@ -28,6 +38,7 @@ def create(
     db.flush()
 
     return chuyen_di
+
 
 def add_loai_du_lichs(
     db,
@@ -56,6 +67,7 @@ def add_so_thichs(
 
         db.add(item)
 
+
 def add_yeu_caus(
     db,
     ma_chuyen_di,
@@ -68,8 +80,12 @@ def add_yeu_caus(
         )
 
         db.add(item)
-        
-def get_by_id(db, ma_chuyen_di):
+
+
+def get_by_id(
+    db,
+    ma_chuyen_di
+):
     return (
         db.query(ChuyenDi)
         .filter(
@@ -79,7 +95,70 @@ def get_by_id(db, ma_chuyen_di):
     )
 
 
-def get_loai_du_lich_by_chuyen_di(db, ma_chuyen_di):
+def get_by_id_and_user(
+    db,
+    ma_chuyen_di,
+    ma_nguoi_dung
+):
+    return (
+        db.query(ChuyenDi)
+        .filter(
+            ChuyenDi.ma_chuyen_di == ma_chuyen_di,
+            ChuyenDi.ma_nguoi_dung == ma_nguoi_dung
+        )
+        .first()
+    )
+
+
+def get_all_by_user(
+    db,
+    ma_nguoi_dung
+):
+    return (
+        db.query(ChuyenDi)
+        .filter(
+            ChuyenDi.ma_nguoi_dung == ma_nguoi_dung
+        )
+        .order_by(
+            ChuyenDi.ngay_tao.desc()
+        )
+        .all()
+    )
+
+
+def update(
+    db,
+    chuyen_di,
+    data
+):
+    if data.ngay_ve is not None:
+        chuyen_di.ngay_ve = data.ngay_ve
+
+    if data.ngan_sach is not None:
+        chuyen_di.ngan_sach = data.ngan_sach
+
+    if data.trang_thai is not None:
+        chuyen_di.trang_thai = data.trang_thai
+
+    chuyen_di.ngay_cap_nhat = datetime.now(timezone.utc)
+
+    db.flush()
+
+    return chuyen_di
+
+
+def delete(
+    db,
+    chuyen_di
+):
+    db.delete(chuyen_di)
+    db.flush()
+
+
+def get_loai_du_lich_by_chuyen_di(
+    db,
+    ma_chuyen_di
+):
     return (
         db.query(LoaiDuLich.ten_loai)
         .join(
@@ -94,7 +173,10 @@ def get_loai_du_lich_by_chuyen_di(db, ma_chuyen_di):
     )
 
 
-def get_so_thich_am_thuc_by_chuyen_di(db, ma_chuyen_di):
+def get_so_thich_am_thuc_by_chuyen_di(
+    db,
+    ma_chuyen_di
+):
     return (
         db.query(SoThichAmThuc.ten_so_thich)
         .join(
@@ -108,7 +190,11 @@ def get_so_thich_am_thuc_by_chuyen_di(db, ma_chuyen_di):
         .all()
     )
 
-def get_yeu_cau_dac_biet_by_chuyen_di(db, ma_chuyen_di):
+
+def get_yeu_cau_dac_biet_by_chuyen_di(
+    db,
+    ma_chuyen_di
+):
     return (
         db.query(YeuCauDacBiet.ten_yeu_cau)
         .join(

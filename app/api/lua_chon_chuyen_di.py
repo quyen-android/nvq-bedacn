@@ -10,8 +10,8 @@ from app.models.yeu_cau_dac_biet import YeuCauDacBiet
 
 
 router = APIRouter(
-    prefix="/trip-options",
-    tags=["Trip Options"]
+    prefix="/lua-chon-chuyen-di",
+    tags=["Lựa chọn chuyến đi"]
 )
 
 

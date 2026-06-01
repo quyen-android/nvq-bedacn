@@ -1,5 +1,5 @@
 import chromadb
-from app.repositories import dia_diem_repo, loai_dia_diem_repo
+
 from sentence_transformers import SentenceTransformer
 
 
@@ -37,7 +37,7 @@ class RagService:
         {dia_diem.ten}
 
         Loại địa điểm:
-        {dia_diem.loai.ten_loai}
+        {dia_diem.loai.ten_loai if dia_diem.loai else ""}
 
         Tags:
         {tags_text}
@@ -53,10 +53,84 @@ class RagService:
 
         Đánh giá:
         {dia_diem.danh_gia}
+
+        Giờ mở:
+        {dia_diem.gio_mo}
+
+        Giờ đóng:
+        {dia_diem.gio_dong}
         """
-    
+
     @classmethod
-    def add_place(cls, dia_diem):
+    def build_metadata(
+        cls,
+        dia_diem
+    ):
+        return {
+            "ma_dia_diem": str(
+                dia_diem.ma_dia_diem
+            ),
+
+            "ten": (
+                dia_diem.ten
+                or ""
+            ),
+
+            "loai": (
+                dia_diem.loai.ten_loai
+                if dia_diem.loai
+                else ""
+            ),
+
+            "gia": float(
+                dia_diem.gia_trung_binh
+                or 0
+            ),
+
+            "danh_gia": float(
+                dia_diem.danh_gia
+                or 0
+            ),
+
+            "so_danh_gia": int(
+                dia_diem.so_danh_gia
+                or 0
+            ),
+
+            "lat": float(
+                dia_diem.vi_do
+                or 0
+            ),
+
+            "lon": float(
+                dia_diem.kinh_do
+                or 0
+            ),
+
+            "tinh": (
+                dia_diem.tinh.ten_tinh
+                if dia_diem.tinh
+                else ""
+            ),
+
+            "gio_mo": (
+                str(dia_diem.gio_mo)
+                if dia_diem.gio_mo
+                else None
+            ),
+
+            "gio_dong": (
+                str(dia_diem.gio_dong)
+                if dia_diem.gio_dong
+                else None
+            ),
+        }
+
+    @classmethod
+    def add_place(
+        cls,
+        dia_diem
+    ):
 
         document = cls.build_document(
             dia_diem
@@ -67,71 +141,69 @@ class RagService:
         ).tolist()
 
         cls.collection.add(
-            ids=[str(dia_diem.ma_dia_diem)],
+            ids=[
+                str(dia_diem.ma_dia_diem)
+            ],
 
-            documents=[document],
+            documents=[
+                document
+            ],
 
-            embeddings=[embedding],
+            embeddings=[
+                embedding
+            ],
 
-            metadatas=[{
-                "ma_dia_diem": str(dia_diem.ma_dia_diem),
-
-                "ten": dia_diem.ten,
-
-                "loai": (
+            metadatas=[
+                cls.build_metadata(
                     dia_diem
-                    .loai
-                    .ten_loai
-                ),
-
-                "gia": float(
-                    dia_diem.gia_trung_binh or 0
-                ),
-
-                "danh_gia": float(
-                    dia_diem.danh_gia or 0
-                ),
-
-                "so_danh_gia": int(
-                    dia_diem.so_danh_gia or 0
-                ),
-
-                "lat": dia_diem.vi_do,
-
-                "lon": dia_diem.kinh_do,
-
-                "tinh": (
-                    dia_diem
-                    .tinh
-                    .ten_tinh
-                ),
-                
-                "gio_mo": dia_diem.gio_mo,
-
-                "gio_dong": dia_diem.gio_dong,
-            }]
+                )
+            ]
         )
 
     @classmethod
-    def update_place(cls, dia_diem):
+    def update_place(
+        cls,
+        dia_diem
+    ):
 
-        document = cls.build_document(dia_diem)
+        document = cls.build_document(
+            dia_diem
+        )
 
         embedding = cls.model.encode(
             document
         ).tolist()
 
         cls.collection.update(
-            ids=[str(dia_diem.ma_dia_diem)],
-            documents=[document],
-            embeddings=[embedding]
+            ids=[
+                str(dia_diem.ma_dia_diem)
+            ],
+
+            documents=[
+                document
+            ],
+
+            embeddings=[
+                embedding
+            ],
+
+            metadatas=[
+                cls.build_metadata(
+                    dia_diem
+                )
+            ]
         )
 
     @classmethod
-    def delete_place(cls, dia_diem_id):
+    def delete_place(
+        cls,
+        dia_diem_id
+    ):
 
         cls.collection.delete(
-            ids=[str(dia_diem_id)]
+            ids=[
+                str(dia_diem_id)
+            ]
         )
 
     @classmethod
@@ -141,7 +213,11 @@ class RagService:
         loai=None,
         so_ngay=1
     ):
-        n_results = max(so_ngay * 4,30)
+
+        n_results = max(
+            so_ngay * 4,
+            30
+        )
 
         query_embedding = cls.model.encode(
             query
@@ -155,7 +231,9 @@ class RagService:
             }
 
         results = cls.collection.query(
-            query_embeddings=[query_embedding],
+            query_embeddings=[
+                query_embedding
+            ],
             n_results=n_results,
             where=where
         )
@@ -166,12 +244,15 @@ class RagService:
         metadatas = results["metadatas"][0]
         distances = results["distances"][0]
 
-        for i in range(len(documents)):
+        for i in range(
+            len(documents)
+        ):
 
             distance = distances[i]
 
-            # distance càng nhỏ => semantic càng cao
-            semantic_score = 1 / (distance + 0.1)
+            semantic_score = 1 / (
+                distance + 0.1
+            )
 
             places.append({
                 "document": documents[i],
