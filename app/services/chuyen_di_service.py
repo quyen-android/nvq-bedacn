@@ -1,5 +1,5 @@
 from app.repositories import chuyen_di_repo
-
+from app.models.chuyen_di import ChuyenDi
 
 class ChuyenDiService:
 
@@ -150,3 +150,31 @@ class ChuyenDiService:
         return {
             "message": "Xóa chuyến đi thành công"
         }
+    
+    @staticmethod
+    def complete_chuyen_di(
+        db,
+        ma_chuyen_di,
+        current_user
+    ):
+        chuyen_di = (
+            db.query(ChuyenDi)
+            .filter(
+                ChuyenDi.ma_chuyen_di == ma_chuyen_di,
+                ChuyenDi.ma_nguoi_dung
+                == current_user.ma_nguoi_dung
+            )
+            .first()
+        )
+
+        if not chuyen_di:
+            raise ValueError(
+                "Không tìm thấy chuyến đi"
+            )
+
+        chuyen_di.trang_thai = "hoan_thanh"
+
+        db.commit()
+        db.refresh(chuyen_di)
+
+        return chuyen_di

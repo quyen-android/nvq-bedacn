@@ -2,6 +2,9 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from fastapi import HTTPException
 from jose import jwt
+import uuid
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 from app.repositories.user_repo import UserRepository
 from app.repositories.token_repo import TokenRepository
@@ -74,6 +77,84 @@ class AuthService:
             raise HTTPException(
                 status_code=400,
                 detail="Email hoặc mật khẩu không đúng"
+            )
+
+        if not user.trang_thai:
+            raise HTTPException(
+                status_code=400,
+                detail="Tài khoản bị khóa"
+            )
+
+        user.dn_lan_cuoi = datetime.now(
+            timezone.utc
+        )
+
+        db.commit()
+
+        access = create_access_token({
+            "sub": str(user.ma_nguoi_dung)
+        })
+
+        refresh, expire = create_refresh_token({
+            "sub": str(user.ma_nguoi_dung)
+        })
+
+        self.token_repo.create(
+            db,
+            user.ma_nguoi_dung,
+            refresh,
+            expire
+        )
+
+        return {
+            "access_token": access,
+            "refresh_token": refresh,
+            "token_type": "bearer"
+        }
+
+    def login_google(
+        self,
+        db: Session,
+        credential: str
+    ):
+        try:
+            google_user = id_token.verify_oauth2_token(
+                credential,
+                requests.Request(),
+                settings.GOOGLE_CLIENT_ID,
+                clock_skew_in_seconds=10
+            )
+
+        except Exception as e:
+            print("GOOGLE LOGIN ERROR:", str(e))
+
+            raise HTTPException(
+                status_code=400,
+                detail="Token Google không hợp lệ"
+            )
+
+        email = google_user.get("email")
+        name = google_user.get("name")
+
+        if not email:
+            raise HTTPException(
+                status_code=400,
+                detail="Google không trả về email"
+            )
+
+        user = self.user_repo.get_user_by_email(
+            db,
+            email
+        )
+
+        if not user:
+            random_password = str(uuid.uuid4())
+
+            user = self.user_repo.create_user(
+                db,
+                name or email,
+                email,
+                hash_password(random_password)
             )
 
         if not user.trang_thai:

@@ -124,3 +124,25 @@ def delete_chuyen_di(
             status_code=404,
             detail=str(e)
         )
+    
+
+@router.put(
+    "/{ma_chuyen_di}/complete"
+)
+def complete_chuyen_di(
+    ma_chuyen_di: UUID,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    try:
+        return ChuyenDiService.complete_chuyen_di(
+            db=db,
+            ma_chuyen_di=ma_chuyen_di,
+            current_user=current_user
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )

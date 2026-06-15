@@ -1,5 +1,6 @@
 import uuid
-from sqlalchemy import Column, Time, Float, DECIMAL, ForeignKey, Text
+
+from sqlalchemy import Column, Time, Float, DECIMAL, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -9,7 +10,11 @@ from app.db.base import Base
 class ChiTietLichTrinh(Base):
     __tablename__ = "chi_tiet_lich_trinh"
 
-    ma_ct = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    ma_ct = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
 
     ma_lich_trinh = Column(
         UUID(as_uuid=True),
@@ -25,24 +30,27 @@ class ChiTietLichTrinh(Base):
     gio_bat_dau = Column(Time)
     gio_ket_thuc = Column(Time)
 
-    # 🚗 phương tiện local
     ma_pt = Column(
         UUID(as_uuid=True),
         ForeignKey("phuong_tien.ma_pt", ondelete="SET NULL"),
         nullable=True
     )
 
-    # 📏 khoảng cách (km)
     khoang_cach = Column(Float)
 
-    # 💸 giá
-    gia = Column(DECIMAL(10, 2))
+    so_luong_pt = Column(
+        Integer,
+        default=1
+    )
 
-    # ======================
-    # 🔗 RELATIONSHIP
-    # ======================
+    gia = Column(
+        DECIMAL(10, 2)
+    )
 
-    lich_trinh = relationship("LichTrinh", back_populates="chi_tiets")
+    lich_trinh = relationship(
+        "LichTrinh",
+        back_populates="chi_tiets"
+    )
 
     dia_diem = relationship("DiaDiem")
 

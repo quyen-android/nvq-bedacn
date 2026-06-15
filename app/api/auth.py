@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -7,28 +7,39 @@ from app.schemas.auth import (
     UserCreate,
     ForgotPasswordSchema,
     ResetPasswordSchema,
-    RefreshTokenRequest
+    RefreshTokenRequest,
+    GoogleLoginRequest
 )
 from app.db.session import get_db
-from app.utils.email import send_reset_email
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+
+router = APIRouter(
+    prefix="/auth",
+    tags=["Auth"]
+)
+
 
 @router.post("/register")
-def register(user: UserCreate, db: Session = Depends(get_db)):
-    try:
-        service = AuthService()
-        new_user = service.register_user(db, user.ten_nguoi_dung, user.email, user.mat_khau)
+def register(
+    user: UserCreate,
+    db: Session = Depends(get_db)
+):
+    service = AuthService()
 
-        return {
-            "id": new_user.ma_nguoi_dung,
-            "ten_nguoi_dung": new_user.ten_nguoi_dung,
-            "email": new_user.email,
-        }
+    new_user = service.register_user(
+        db,
+        user.ten_nguoi_dung,
+        user.email,
+        user.mat_khau
+    )
 
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    
+    return {
+        "id": new_user.ma_nguoi_dung,
+        "ten_nguoi_dung": new_user.ten_nguoi_dung,
+        "email": new_user.email,
+    }
+
+
 @router.post("/login")
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -37,31 +48,75 @@ def login(
     service = AuthService()
 
     if not form_data.username or not form_data.password:
-        raise HTTPException(400, "Thiếu email hoặc mật khẩu")
-
-    try:
-        return service.login(
-            db=db,
-            email=form_data.username,
-            mat_khau=form_data.password
+        raise HTTPException(
+            status_code=400,
+            detail="Thiếu email hoặc mật khẩu"
         )
 
-    except ValueError as e:
-        raise HTTPException(401, str(e))
-    
-@router.post("/forgot-password")
-def forgot_password(data: ForgotPasswordSchema, db: Session = Depends(get_db)):
+    return service.login(
+        db=db,
+        email=form_data.username,
+        mat_khau=form_data.password
+    )
+
+
+@router.post("/google")
+def google_login(
+    data: GoogleLoginRequest,
+    db: Session = Depends(get_db)
+):
     service = AuthService()
-    service.forgot_password(db, data.email)
-    return {"msg": "Nếu email tồn tại, đã gửi link"}
+
+    return service.login_google(
+        db=db,
+        credential=data.credential
+    )
+
+
+@router.post("/forgot-password")
+def forgot_password(
+    data: ForgotPasswordSchema,
+    db: Session = Depends(get_db)
+):
+    service = AuthService()
+
+    service.forgot_password(
+        db,
+        data.email
+    )
+
+    return {
+        "msg": "Nếu email tồn tại, đã gửi link"
+    }
+
 
 @router.post("/reset-password")
-def reset_password(data: ResetPasswordSchema, db: Session = Depends(get_db)):
+def reset_password(
+    data: ResetPasswordSchema,
+    db: Session = Depends(get_db)
+):
     service = AuthService()
-    service.reset_password(db, data.token, data.new_password, data.confirm_password)
-    return {"msg": "Đổi mật khẩu thành công"}
+
+    service.reset_password(
+        db,
+        data.token,
+        data.new_password,
+        data.confirm_password
+    )
+
+    return {
+        "msg": "Đổi mật khẩu thành công"
+    }
+
 
 @router.post("/refresh-token")
-def refresh_token(data: RefreshTokenRequest, db: Session = Depends(get_db)):
+def refresh_token(
+    data: RefreshTokenRequest,
+    db: Session = Depends(get_db)
+):
     service = AuthService()
-    return service.refresh_token(db, data.refresh_token)
+
+    return service.refresh_token(
+        db,
+        data.refresh_token
+    )

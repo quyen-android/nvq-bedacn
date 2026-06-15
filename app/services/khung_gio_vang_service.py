@@ -1,4 +1,6 @@
 from datetime import time
+from datetime import timedelta
+from sqlalchemy import text
 
 from fastapi import HTTPException
 
@@ -49,12 +51,6 @@ class KhungGioVangService:
             raise HTTPException(
                 400,
                 "Tháng kết thúc phải từ 1 đến 12"
-            )
-
-        if thang_bat_dau > thang_ket_thuc:
-            raise HTTPException(
-                400,
-                "Tháng bắt đầu không được lớn hơn tháng kết thúc"
             )
 
     @staticmethod
@@ -269,3 +265,74 @@ class KhungGioVangService:
         return {
             "message": "Xóa khung giờ vàng thành công"
         }
+    
+    @staticmethod
+    def get_place_id(place):
+        if isinstance(place, dict):
+            return (
+                place.get("ma_dia_diem")
+                or place.get("metadata", {}).get("ma_dia_diem")
+                or place.get("metadata", {}).get("id")
+            )
+
+        return getattr(place, "ma_dia_diem", None)
+
+    @classmethod
+    def lock_golden_hour_places(cls, db, days_plan, start_date):
+        for day in days_plan:
+            ngay_thuc_te = start_date + timedelta(
+                days=day["day"] - 1
+            )
+
+            thang_hien_tai = ngay_thuc_te.month
+            locked_places = []
+
+            for place in day.get("places", []):
+                ma_dia_diem = cls.get_place_id(place)
+
+                if not ma_dia_diem:
+                    continue
+
+                query = text("""
+                    SELECT 
+                        gio_bat_dau,
+                        gio_ket_thuc,
+                        thang_bat_dau,
+                        thang_ket_thuc
+                    FROM khung_gio_vang
+                    WHERE ma_dia_diem = :ma_dia_diem
+                """)
+
+                rows = db.execute(
+                    query,
+                    {"ma_dia_diem": ma_dia_diem}
+                ).fetchall()
+
+                for row in rows:
+                    thang_bat_dau = row.thang_bat_dau
+                    thang_ket_thuc = row.thang_ket_thuc
+
+                    if thang_bat_dau <= thang_ket_thuc:
+                        hop_le = (
+                            thang_bat_dau
+                            <= thang_hien_tai
+                            <= thang_ket_thuc
+                        )
+                    else:
+                        hop_le = (
+                            thang_hien_tai >= thang_bat_dau
+                            or thang_hien_tai <= thang_ket_thuc
+                        )
+
+                    if hop_le:
+                        locked_places.append({
+                            "place": place,
+                            "locked_start": row.gio_bat_dau,
+                            "locked_end": row.gio_ket_thuc
+                        })
+                        break
+
+            day["locked_places"] = locked_places
+
+        return days_plan
+    

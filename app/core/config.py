@@ -19,9 +19,10 @@ class Settings(BaseSettings):
     UPLOAD_FOLDER: str
     MAX_FILE_SIZE: int
 
-    OLLAMA_URL: str
-    OLLAMA_MODEL: str
+    GOOGLE_CLIENT_ID: str
     
+    GEMINI_API_KEY: str
+    GEMINI_MODEL: str = "gemini-2.5-flash-lite"
     class Config:
         env_file = ".env"
 
