@@ -72,16 +72,6 @@ class GeminiService:
                 or prompt_tokens + output_tokens
             )
 
-        if not tokens_su_dung:
-            tokens_su_dung = max(
-                1,
-                int(
-                    (
-                        len(prompt)
-                        + len(text)
-                    ) / 4
-                )
-            )
 
         return {
             "text": text,
@@ -475,8 +465,10 @@ JSON mẫu bắt buộc:
             if v.loai != "lien_tinh"
         ]
 
-        accommodations, travel_places = cls.split_accommodations_and_places(
-            places
+        accommodations, travel_places = (
+            cls.split_accommodations_and_places(
+                places
+            )
         )
 
         if not accommodations:
@@ -508,14 +500,38 @@ JSON mẫu bắt buộc:
             )
         )
 
+        usage = getattr(
+            response,
+            "usage_metadata",
+            None
+        )
+
+        tokens_su_dung = 0
+
+        if usage:
+            tokens_su_dung = (
+                getattr(
+                    usage,
+                    "total_token_count",
+                    0
+                ) or 0
+            )
+
         raw_response = response.text.strip()
 
         try:
-            return json.loads(raw_response)
-        except Exception:
-            return cls.clean_json_response(
+            lich_trinh = json.loads(
                 raw_response
             )
+        except Exception:
+            lich_trinh = cls.clean_json_response(
+                raw_response
+            )
+
+        return {
+            "itinerary": lich_trinh,
+            "tokens_su_dung": tokens_su_dung
+        }
         
     @classmethod
     def sua_lich_trinh_theo_ngan_sach(

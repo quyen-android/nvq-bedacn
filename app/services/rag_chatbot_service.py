@@ -103,7 +103,6 @@ class RagChatbotService:
 
         if (
             "xóa" in text
-            or "xoá" in text
             or "bỏ" in text
             or "loại bỏ" in text
         ):
@@ -435,40 +434,42 @@ class RagChatbotService:
             })
 
         prompt = f"""
-Bạn là AI lập lịch du lịch.
+            Bạn là AI lập lịch du lịch.
 
-Hãy chọn giờ bắt đầu và giờ kết thúc phù hợp cho địa điểm mới.
+            Hãy chọn giờ bắt đầu và giờ kết thúc phù hợp cho địa điểm mới.
 
-Yêu cầu:
-- Không trùng với các khung giờ hiện có.
-- Không fix cứng giờ.
-- Ưu tiên khoảng trống hợp lý trong ngày.
-- Nếu người dùng có nói giờ thì ưu tiên giờ người dùng.
-- Chỉ trả về JSON hợp lệ, không giải thích.
+            Yêu cầu:
+            - Không trùng với các khung giờ hiện có.
+            - Không fix cứng giờ.
+            - Ưu tiên khoảng trống hợp lý trong ngày.
+            - Ưu tiên tối ưu hóa đường đi.
+            - Nếu người dùng có nói giờ thì ưu tiên giờ người dùng.
+            - Chỉ trả về JSON hợp lệ, không giải thích.
 
-Câu yêu cầu của người dùng:
-{message}
+            Câu yêu cầu của người dùng:
+            {message}
 
-Ngày cần sửa:
-{day_number}
+            Ngày cần sửa:
+            {day_number}
 
-Địa điểm cần thêm/đổi:
-{place_name}
+            Địa điểm cần thêm/đổi:
+            {place_name}
 
-Lịch hiện tại trong ngày:
-{current_schedule}
+            Lịch hiện tại trong ngày:
+            {current_schedule}
 
-Format trả về:
-{{
-  "start_time": "HH:MM",
-  "end_time": "HH:MM"
-}}
-"""
+            Format trả về:
+            {{
+            "start_time": "HH:MM",
+            "end_time": "HH:MM"
+            }}
+            """
 
         try:
-            result = GeminiService.chat_text(prompt)
+            result = GeminiService.chat_text_with_usage(prompt)
 
-            text = str(result or "").strip()
+            text = str(result.get("text", "")).strip()
+            tokens = result.get("tokens_su_dung", 0)
 
             if text.startswith("```"):
                 text = text.replace("```json", "")
@@ -481,12 +482,13 @@ Format trả về:
             suggested_end_time = data.get("end_time")
 
             if suggested_start_time and suggested_end_time:
-                return suggested_start_time, suggested_end_time
+                return suggested_start_time, suggested_end_time,tokens
 
-        except Exception:
-            return None, None
+            return None, None, tokens
 
-        return None, None
+        except Exception as e:
+            print("AI TIME ERROR:", e)
+            return None, None, 0
 
     @classmethod
     def resolve_time_for_action(
@@ -503,7 +505,7 @@ Format trả về:
         if parsed_start_time and parsed_end_time:
             return parsed_start_time, parsed_end_time
 
-        ai_start_time, ai_end_time = cls.ai_suggest_time_for_place(
+        ai_start_time, ai_end_time, ai_tokens = cls.ai_suggest_time_for_place(
             message=message,
             day_number=day_number,
             place_name=place_name,
@@ -519,7 +521,7 @@ Format trả về:
                 "Bạn hãy nói rõ giờ, ví dụ: thêm Biển Mỹ Khê vào ngày 2 lúc 15:00"
             )
 
-        return final_start_time, final_end_time
+        return final_start_time, final_end_time, ai_tokens
 
     @classmethod
     def create_item_from_place(
@@ -767,6 +769,8 @@ Format trả về:
                 f"Địa chỉ: {metadata.get('dia_chi')} | "
                 f"Giá: {metadata.get('gia')} | "
                 f"Đánh giá: {metadata.get('danh_gia')} | "
+                f"Địa chỉ: {metadata.get('dia_chi')} | "
+                f"Khung giờ vàng: {metadata.get('golden_hours')} | "
                 f"ID: {metadata.get('ma_dia_diem')}"
             )
 
@@ -822,11 +826,6 @@ Format trả về:
                     f"Bạn hãy bấm 'Áp dụng thay đổi' để lưu vào lịch trình."
                 )
 
-                tokens_su_dung = max(
-                    1,
-                    int((len(message) + len(answer)) / 4)
-                )
-
                 cls.save_ai_log(
                     db=db,
                     current_user=current_user,
@@ -835,7 +834,6 @@ Format trả về:
                     answer=answer,
                     context="chatbot_rag_xoa_dia_diem",
                     started_at=request_started_at,
-                    tokens_su_dung=tokens_su_dung
                 )
 
                 return {
@@ -857,7 +855,7 @@ Format trả về:
                     day_number
                 )
 
-                item_start_time, item_end_time = cls.resolve_time_for_action(
+                item_start_time, item_end_time, tokens_su_dung  = cls.resolve_time_for_action(
                     message=message,
                     day_number=day_number,
                     place_name=dia_diem.ten,
@@ -882,11 +880,6 @@ Format trả về:
                     f"'{dia_diem.ten}' vào ngày {day_number} "
                     f"từ {item_start_time} đến {item_end_time}. "
                     f"Bạn hãy bấm 'Áp dụng thay đổi' để lưu vào lịch trình."
-                )
-
-                tokens_su_dung = max(
-                    1,
-                    int((len(message) + len(answer)) / 4)
                 )
 
                 cls.save_ai_log(
@@ -938,7 +931,7 @@ Format trả về:
                 if old_index is not None:
                     old_item = target_day.get("items", [])[old_index]
 
-                item_start_time, item_end_time = cls.resolve_time_for_action(
+                item_start_time, item_end_time, tokens_su_dung  = cls.resolve_time_for_action(
                     message=message,
                     day_number=day_number,
                     place_name=dia_diem_moi.ten,
@@ -969,10 +962,10 @@ Format trả về:
                     f"Bạn hãy bấm 'Áp dụng thay đổi' để lưu vào lịch trình."
                 )
                 
-                tokens_su_dung = max(
-                    1,
-                    int((len(message) + len(answer)) / 4)
-                )
+                # tokens_su_dung = max(
+                #     1,
+                #     int((len(message) + len(answer)) / 4)
+                # )
 
                 cls.save_ai_log(
                     db=db,
@@ -1001,25 +994,25 @@ Format trả về:
         )
 
         prompt = f"""
-Bạn là trợ lý AI du lịch cho hệ thống TripAI.
+            Bạn là trợ lý AI du lịch cho hệ thống TripAI.
 
-Nhiệm vụ:
-- Trả lời câu hỏi của người dùng dựa trên lịch trình hiện tại.
-- Nếu người dùng muốn chỉnh lịch trình, hãy hướng dẫn họ dùng một trong các mẫu:
-  1. xóa Cầu Rồng ngày 1
-  2. thêm Biển Mỹ Khê vào ngày 2
-  3. thêm Biển Mỹ Khê vào ngày 2 lúc 15:00
-  4. đổi Cầu Rồng ngày 1 thành Biển Mỹ Khê
-- Không tự ý lưu DB.
-- Trả lời ngắn gọn, dễ hiểu bằng tiếng Việt.
+            Nhiệm vụ:
+            - Trả lời câu hỏi của người dùng dựa trên lịch trình hiện tại.
+            - Nếu người dùng muốn chỉnh lịch trình, hãy hướng dẫn họ dùng một trong các mẫu:
+            1. xóa Cầu Rồng ngày 1
+            2. thêm Biển Mỹ Khê vào ngày 2
+            3. thêm Biển Mỹ Khê vào ngày 2 lúc 15:00
+            4. đổi Cầu Rồng ngày 1 thành Biển Mỹ Khê
+            - Không tự ý lưu DB.
+            - Trả lời ngắn gọn, dễ hiểu bằng tiếng Việt.
 
-{trip_context}
+            {trip_context}
 
-{rag_context}
+            {rag_context}
 
-CÂU HỎI NGƯỜI DÙNG:
-{message}
-"""
+            CÂU HỎI NGƯỜI DÙNG:
+            {message}
+            """
 
         gemini_result = GeminiService.chat_text_with_usage(prompt)
 

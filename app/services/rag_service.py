@@ -74,19 +74,19 @@ class RagService:
                 golden_text = "\n".join(golden_lines)
 
         return f"""
-    Tên địa điểm: {dia_diem.ten or ""}
-    Loại địa điểm: {dia_diem.loai.ten_loai if dia_diem.loai else ""}
-    Tags: {tags_text}
-    Mô tả: {dia_diem.mo_ta or ""}
-    Địa chỉ: {dia_diem.dia_chi or ""}
-    Giá trung bình: {dia_diem.gia_trung_binh or 0}
-    Đánh giá: {dia_diem.danh_gia or 0}
-    Số đánh giá: {dia_diem.so_danh_gia or 0}
-    Giờ mở: {dia_diem.gio_mo or ""}
-    Giờ đóng: {dia_diem.gio_dong or ""}
-    Tỉnh: {dia_diem.tinh.ten_tinh if dia_diem.tinh else ""}
-    {golden_text}
-    """
+            Tên địa điểm: {dia_diem.ten or ""}
+            Loại địa điểm: {dia_diem.loai.ten_loai if dia_diem.loai else ""}
+            Tags: {tags_text}
+            Mô tả: {dia_diem.mo_ta or ""}
+            Địa chỉ: {dia_diem.dia_chi or ""}
+            Giá trung bình: {dia_diem.gia_trung_binh or 0}
+            Đánh giá: {dia_diem.danh_gia or 0}
+            Số đánh giá: {dia_diem.so_danh_gia or 0}
+            Giờ mở: {dia_diem.gio_mo or ""}
+            Giờ đóng: {dia_diem.gio_dong or ""}
+            Tỉnh: {dia_diem.tinh.ten_tinh if dia_diem.tinh else ""}
+            {golden_text}
+            """
 
     @classmethod
     def build_metadata(cls, dia_diem: DiaDiem, db=None):
@@ -100,7 +100,8 @@ class RagService:
 
         return {
             "ma_dia_diem": str(dia_diem.ma_dia_diem),
-            "ten": dia_diem.ten or "",
+            "ten": dia_diem.ten,
+            "dia_chi": dia_diem.dia_chi,
             "loai": dia_diem.loai.ten_loai if dia_diem.loai else "",
             "tinh": dia_diem.tinh.ten_tinh if dia_diem.tinh else "",
             "gia": float(dia_diem.gia_trung_binh or 0),

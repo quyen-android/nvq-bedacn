@@ -274,6 +274,7 @@ class LichTrinhService:
                     "id": cls.to_uuid_string(ct.ma_dia_diem),
 
                     "place_name": dia_diem.ten if dia_diem else None,
+                    "address": dia_diem.dia_chi,
 
                     "type": (
                         "accommodation"

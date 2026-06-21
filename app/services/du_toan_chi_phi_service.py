@@ -21,15 +21,8 @@ class DuToanChiPhiService:
 
     @staticmethod
     def get_so_xe(so_nguoi, suc_chua):
-        try:
-            so_nguoi = int(so_nguoi or 1)
-            suc_chua = int(suc_chua or 1)
-        except Exception:
-            so_nguoi = 1
-            suc_chua = 1
-
-        if suc_chua <= 0:
-            suc_chua = 1
+        so_nguoi = int(so_nguoi or 1)
+        suc_chua = int(suc_chua or 1)
 
         return ceil(so_nguoi / suc_chua)
 
@@ -89,12 +82,7 @@ class DuToanChiPhiService:
                 "chi_phi": gia * int(so_nguoi or 1)
             }
 
-        return {
-            "loai_chi_phi": "khac",
-            "so_nguoi": int(so_nguoi or 1),
-            "don_gia": gia,
-            "chi_phi": gia * int(so_nguoi or 1)
-        }
+        return None
 
     @classmethod
     def tinh_chi_phi_di_chuyen_item(
@@ -202,7 +190,6 @@ class DuToanChiPhiService:
         tong_tham_quan = 0
         tong_luu_tru = 0
         tong_di_chuyen = 0
-        tong_khac = 0
 
         all_segments = []
 
@@ -246,8 +233,6 @@ class DuToanChiPhiService:
                     tong_tham_quan += chi_phi_item
                 elif loai_chi_phi == "luu_tru":
                     tong_luu_tru += chi_phi_item
-                else:
-                    tong_khac += chi_phi_item
 
                 transport_result = cls.tinh_chi_phi_di_chuyen_item(
                     item_truoc=item_truoc,
@@ -329,7 +314,6 @@ class DuToanChiPhiService:
             + tong_tham_quan
             + tong_luu_tru
             + tong_di_chuyen
-            + tong_khac
         )
 
         ngan_sach = float(
@@ -357,7 +341,6 @@ class DuToanChiPhiService:
             "chi_phi_tham_quan": round(tong_tham_quan, 0),
             "chi_phi_luu_tru": round(tong_luu_tru, 0),
             "chi_phi_di_chuyen_dia_phuong": round(tong_di_chuyen, 0),
-            "chi_phi_khac": round(tong_khac, 0),
             "tong_chi_phi": round(tong_chi_phi, 0),
             "ngan_sach": round(ngan_sach, 0),
             "vuot_ngan_sach": vuot_ngan_sach,

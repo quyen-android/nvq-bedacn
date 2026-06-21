@@ -105,11 +105,6 @@ class KiemTraLichTrinhService:
                     phuong_tien.suc_chua or 1
                 )
 
-                if suc_chua * so_xe < so_nguoi:
-                    loi.append(
-                        f"Ngày {ngay}: phương tiện {phuong_tien.ten_pt} không đủ sức chứa"
-                    )
-
                 start_time = cls.parse_time(
                     item.get("start_time")
                 )

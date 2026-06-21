@@ -33,9 +33,6 @@ class AIPlannerService:
             def time_key(item):
                 start_time = item.get("start_time")
 
-                if not start_time:
-                    return "99:99"
-
                 if start_time == "overnight":
                     return "99:99"
 
@@ -112,7 +109,8 @@ class AIPlannerService:
         cau_hoi,
         cau_tra_loi,
         ngu_canh,
-        started_at
+        started_at,
+        tokens_su_dung
     ):
         try:
             NhatKyAIService.tao_log(
@@ -123,6 +121,7 @@ class AIPlannerService:
                 cau_tra_loi=cau_tra_loi,
                 ngu_canh=ngu_canh,
                 model=settings.GEMINI_MODEL,
+                tokens_su_dung=tokens_su_dung,
                 tg_phan_hoi=round(time.time() - started_at, 3)
             )
 
@@ -244,40 +243,16 @@ class AIPlannerService:
             * int(so_nguoi)
         )
 
-        tong_chi_phi_lien_tinh = (
-            chi_phi_di
-            + chi_phi_ve
-        )
-
-        thoi_gian_di_phut = 0
-        thoi_gian_ve_phut = 0
-
-        if pt_di.toc_do_tb:
-            thoi_gian_di_phut = (
-                khoang_cach_km
-                / float(pt_di.toc_do_tb)
-                * 60
-            )
-
-        if pt_ve.toc_do_tb:
-            thoi_gian_ve_phut = (
-                khoang_cach_km
-                / float(pt_ve.toc_do_tb)
-                * 60
-            )
+        tong_chi_phi_lien_tinh = ( chi_phi_di + chi_phi_ve )
 
         return {
-            "khoang_cach_km": round(
-                khoang_cach_km,
-                2
-            ),
-
+            "khoang_cach_km": round( khoang_cach_km,2 ),
+                      
             "luot_di": {
                 "ma_pt": str(pt_di.ma_pt),
                 "ten_pt": pt_di.ten_pt,
                 "gia_moi_km": float(pt_di.gia_moi_km or 0),
                 "chi_phi": round(chi_phi_di, 0),
-                "thoi_gian_phut": round(thoi_gian_di_phut)
             },
 
             "luot_ve": {
@@ -285,7 +260,6 @@ class AIPlannerService:
                 "ten_pt": pt_ve.ten_pt,
                 "gia_moi_km": float(pt_ve.gia_moi_km or 0),
                 "chi_phi": round(chi_phi_ve, 0),
-                "thoi_gian_phut": round(thoi_gian_ve_phut)
             },
 
             "tong_chi_phi_lien_tinh": round(
@@ -311,7 +285,6 @@ class AIPlannerService:
             cost_summary.get("tong_chi_phi")
             or cost_summary.get("estimated_total_cost")
             or lich_trinh_json.get("estimated_total_cost")
-            or 0
         )
 
         tong_chi_phi_lien_tinh = float(
@@ -321,50 +294,18 @@ class AIPlannerService:
             )
         )
 
-        tong_chi_phi_chuyen_di = (
-            tong_chi_phi_lien_tinh
-            + chi_phi_noi_tinh
-        )
+        tong_chi_phi_chuyen_di = (tong_chi_phi_lien_tinh + chi_phi_noi_tinh)
 
         cost_summary["chi_phi_lien_tinh"] = chi_phi_lien_tinh
-        cost_summary["chi_phi_noi_tinh"] = round(
-            chi_phi_noi_tinh,
-            0
-        )
-        cost_summary["tong_chi_phi_lien_tinh"] = round(
-            tong_chi_phi_lien_tinh,
-            0
-        )
-        cost_summary["tong_chi_phi_chuyen_di"] = round(
-            tong_chi_phi_chuyen_di,
-            0
-        )
-        cost_summary["ngan_sach_goc"] = round(
-            float(ngan_sach_goc),
-            0
-        )
-        cost_summary["ngan_sach_sau_khi_tru_lien_tinh"] = round(
-            float(ngan_sach_con_lai),
-            0
-        )
-        cost_summary["vuot_ngan_sach_tong"] = (
-            tong_chi_phi_chuyen_di
-            > float(ngan_sach_goc)
-        )
-        cost_summary["so_tien_vuot_tong"] = max(
-            0,
-            round(
-                tong_chi_phi_chuyen_di
-                - float(ngan_sach_goc),
-                0
-            )
-        )
-
+        cost_summary["chi_phi_noi_tinh"] = round(chi_phi_noi_tinh,0)
+        cost_summary["tong_chi_phi_lien_tinh"] = round(tong_chi_phi_lien_tinh,0)
+        cost_summary["tong_chi_phi_chuyen_di"] = round(tong_chi_phi_chuyen_di,0)
+        cost_summary["ngan_sach_goc"] = round(float(ngan_sach_goc),0)
+        cost_summary["ngan_sach_sau_khi_tru_lien_tinh"] = round(float(ngan_sach_con_lai),0)
+        cost_summary["vuot_ngan_sach_tong"] = (tong_chi_phi_chuyen_di > float(ngan_sach_con_lai))
+        cost_summary["so_tien_vuot_tong"] = max(0,round(tong_chi_phi_chuyen_di - float(ngan_sach_con_lai),0))
         lich_trinh_json["cost_summary"] = cost_summary
-        lich_trinh_json["estimated_total_cost"] = round(
-            tong_chi_phi_chuyen_di,
-            0
-        )
+        lich_trinh_json["estimated_total_cost"] = round(tong_chi_phi_chuyen_di,0)
 
         return lich_trinh_json
 
@@ -404,17 +345,15 @@ class AIPlannerService:
             raise ValueError("Chuyến đi chưa có tỉnh đến")
 
         if chuyen_di.ngay_di and chuyen_di.ngay_ve:
-            so_ngay = (
-                chuyen_di.ngay_ve
-                - chuyen_di.ngay_di
-            ).days + 1
+            so_ngay = (chuyen_di.ngay_ve - chuyen_di.ngay_di).days + 1
+
         else:
             raise ValueError("Chuyến đi chưa có ngày đi/ngày về")
 
         if so_ngay <= 0:
             raise ValueError("Ngày về phải lớn hơn hoặc bằng ngày đi")
 
-        so_nguoi = chuyen_di.so_nguoi or 1
+        so_nguoi = chuyen_di.so_nguoi
 
         ngan_sach_goc = (
             float(chuyen_di.ngan_sach)
@@ -435,11 +374,8 @@ class AIPlannerService:
             )
         )
 
-        ngan_sach_con_lai = max(
-            0,
-            ngan_sach_goc - tong_chi_phi_lien_tinh
-        )
-
+        ngan_sach_con_lai = max(0, ngan_sach_goc - tong_chi_phi_lien_tinh)
+            
         cau_hoi_user = (
             f"Lên lịch trình du lịch từ {tinh_di} đến {tinh_den}. "
             f"Tên chuyến đi: {chuyen_di.ten_chuyen_di or ''}. "
@@ -656,11 +592,8 @@ class AIPlannerService:
             )
 
         if cost_summary.get("vuot_ngan_sach_tong"):
-            raise ValueError(
-                "Lịch trình vượt ngân sách tổng: "
-                + str(cost_summary.get("so_tien_vuot_tong"))
-            )
-
+            raise ValueError("Lịch trình vượt ngân sách tổng: " + str(cost_summary.get("so_tien_vuot_tong")))
+  
     @classmethod
     def generate_and_save(
         cls,
@@ -704,7 +637,7 @@ class AIPlannerService:
         if not db_places:
             raise ValueError("Không lấy được địa điểm DB từ RAG")
         
-        lich_trinh_json = GeminiService.len_lich_trinh_sang_tao(
+        gemini_result = GeminiService.len_lich_trinh_sang_tao(
             cau_hoi_user=cau_hoi_user,
             places=rag_places,
             vehicles=vehicles,
@@ -712,6 +645,10 @@ class AIPlannerService:
             so_nguoi=so_nguoi,
             ngan_sach=ngan_sach
         )
+
+        lich_trinh_json = gemini_result["itinerary"]
+
+        tong_tokens = gemini_result["tokens_su_dung"]
 
         for lan_sua in range(cls.MAX_REPAIR_BUDGET + 1):
             lich_trinh_json = cls.process_itinerary_once(
@@ -736,7 +673,7 @@ class AIPlannerService:
             if lan_sua >= cls.MAX_REPAIR_BUDGET:
                 break
 
-            lich_trinh_json = GeminiService.sua_lich_trinh_theo_ngan_sach(
+            repair_result = GeminiService.sua_lich_trinh_theo_ngan_sach(
                 lich_trinh_ai=lich_trinh_json,
                 cost_summary=cost_summary,
                 cau_hoi_user=cau_hoi_user,
@@ -746,6 +683,10 @@ class AIPlannerService:
                 so_nguoi=so_nguoi,
                 ngan_sach=ngan_sach
             )
+
+            lich_trinh_json = repair_result["itinerary"]
+
+            tong_tokens += repair_result["tokens_su_dung"]
 
         lich_trinh_json = cls.gan_khoang_cach_vao_items(
             lich_trinh_json
@@ -774,7 +715,8 @@ class AIPlannerService:
             cau_hoi=cau_hoi_user,
             cau_tra_loi=answer_log,
             ngu_canh="tao_lich_trinh_ai",
-            started_at=request_started_at
+            started_at=request_started_at,
+            tokens_su_dung=tong_tokens
         )
 
         return {
